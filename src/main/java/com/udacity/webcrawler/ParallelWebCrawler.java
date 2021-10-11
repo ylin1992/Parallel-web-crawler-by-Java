@@ -132,7 +132,7 @@ final class ParallelWebCrawler implements WebCrawler {
             if (links != null) {
                 subtasks = links
                         .stream()
-                        .map(link -> new CrawlInternal(link, deadline, maxDepth, counts, visitedUrls))
+                        .map(link -> new CrawlInternal(link, deadline, maxDepth - 1, counts, visitedUrls))
                         .collect(Collectors.toList());
             }
             invokeAll(subtasks);

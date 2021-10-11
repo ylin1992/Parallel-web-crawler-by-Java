@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -28,12 +28,14 @@ public final class ConfigurationLoader {
      *
      * @return the loaded {@link CrawlerConfiguration}.
      */
-    public CrawlerConfiguration load() throws IOException {
+    public CrawlerConfiguration load() {
         // TODO: Fill in this method.
-        Reader reader = new StringReader(path.toString());
-        CrawlerConfiguration crawlerConfiguration = read(reader);
-        reader.close();
-        return crawlerConfiguration;
+        try (Reader reader = Files.newBufferedReader(path)) {
+            return read(reader);
+        } catch (Exception ex) {
+            System.out.println(ex.getLocalizedMessage());
+            return null;
+        }
     }
 
     /**
@@ -50,7 +52,6 @@ public final class ConfigurationLoader {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.disable(com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE);
         CrawlerConfiguration.Builder builder = objectMapper.readValue(reader, CrawlerConfiguration.Builder.class);
-        System.out.println(builder);
         return builder.build();
     }
 }

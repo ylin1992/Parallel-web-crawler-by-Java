@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
  * A data class that represents the configuration of a single web crawl.
  */
 public final class CrawlerConfiguration {
-
     private final List<String> startPages;
     private final List<Pattern> ignoredUrls;
     private final List<Pattern> ignoredWords;
@@ -251,6 +250,7 @@ public final class CrawlerConfiguration {
          *
          * <p>See {@link #getImplementationOverride()}.
          */
+        @JsonProperty("implementationOverride")
         public Builder setImplementationOverride(String implementationOverride) {
             this.implementationOverride = Objects.requireNonNull(implementationOverride);
             return this;
@@ -324,7 +324,6 @@ public final class CrawlerConfiguration {
             if (popularWordCount < 0) {
                 throw new IllegalArgumentException("popularWordCount cannot be negative");
             }
-
             return new CrawlerConfiguration(
                     startPages.stream().collect(Collectors.toUnmodifiableList()),
                     ignoredUrls.stream().map(Pattern::compile).collect(Collectors.toUnmodifiableList()),

@@ -123,6 +123,7 @@ final class ParallelWebCrawler implements WebCrawler {
                 //}
 
                 // atomic operation
+                //System.out.println("Working thread: #" + Thread.currentThread());
                 counts.compute(e.getKey(), (k, v) -> v == null ? e.getValue() : e.getValue() + v);
             }
 

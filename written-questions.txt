@@ -11,6 +11,15 @@ Q1. Run the web crawler using the configurations located at src/main/config/writ
 
     Why did the parser take more time when run with ParallelWebCrawler?
 
+    A1. Taking a look at Profiling#record(), in the method it sums the time elapsed everytime an invocation is called.
+    data.compute(key, (k, v) -> (v == null) ? elapsed : v.plus(elapsed));
+    Thus, the record time consumption for PageParser#parse() represents "a summation of time consumed by all threads",
+    and this is the reason why for parse(), it's recorded taking longer time than single thread does.
+
+    On the other hand, WebCrawler#crawl() is only "Profiled" once, and the multi-threading process happens inside of
+    the method, hence the amount of time consumed for crawl() with multi-thread doesn't differ from single-thread that
+    much.
+
 
 Q2. Your manager ran your crawler on her old personal computer, using the configurations from Q1, and she notices that
     the sequential crawler actually outperforms the parallel crawler. She would like to know why.
@@ -18,15 +27,46 @@ Q2. Your manager ran your crawler on her old personal computer, using the config
     (a) Suggest one reason why the sequential web crawler was able to read more web pages than the parallel crawler.
         (Hint: Try setting "parallelism" to 1 in the JSON configs to simulate your manager's computer.)
 
+    When a parallel based program is running, OS has to spend resources creating threads, monitoring treads, etc., which
+    make the program more expensive.
+    Below are examples of sequential mode and parallel mode (with only one thread activated) simulating the problem.
+
+    Run at Tue, 12 Oct 2021 08:20:24 GMT
+    com.udacity.webcrawler.ParallelWebCrawler#crawl took 0m 2s 428ms
+    com.udacity.webcrawler.parser.PageParserImpl#parse took 0m 2s 400ms
+
+    Run at Tue, 12 Oct 2021 08:21:38 GMT
+    com.udacity.webcrawler.SequentialWebCrawler#crawl took 0m 1s 501ms
+    com.udacity.webcrawler.parser.PageParserImpl#parse took 0m 1s 492ms
+
+
     (b) Suggest one scenario in which the parallel web crawler will almost certainly perform better than the sequential
         crawler. Why will it perform better?
 
+    It would be more efficient when we activate more threads to run the program, taken below test set as an example
+    // sequential, timeout = 10s
+    {"wordCounts":{"":1027,"youtube":337,"google":291,"data":212,"learning":208},"urlsVisited":20}
+
+    // parallel, parallelism = 1, timeout = 10s
+    {"wordCounts":{"":1316,"youtube":414,"google":311,"data":212,"learning":208},"urlsVisited":21}
+
+    // parallel, parallelism = 10, timeout = 10s
+    {"wordCounts":{"your":2295,"data":2058,"with":1975,"udacity":1734,"program":1647},"urlsVisited":128}
+
+    it is clear that the number urls visited by the third experiment is way larger than that of the first and the second,
+    if we want to crawl larger and deeper, the parallel mode will outperform.
 
 Q3. Analyze your method profiler through the lens of Aspect Oriented Programming, by answering the following questions:
 
     (a) What cross-cutting concern is being addressed by the com.udacity.webcrawler.profiler.Profiler class?
 
+        For every single method to be tested, clock.instant() has to be triggered before and after the method, which is
+        the cross-cutting concern of this class.
+
     (b) What are the join points of the Profiler in the web crawler program?
+
+        Join points of the Profiler are all method annotated by "Profiled" annotation. i.e., WebCrawler#crawl() or
+        PageParser#parse()
 
 
 Q4. Identify three (3) different design patterns used in this project, and explain which interfaces, classes, and/or
@@ -36,3 +76,18 @@ Q4. Identify three (3) different design patterns used in this project, and expla
     anything, you can name two things you disliked.
 
 
+    1. Proxy pattern:
+        Proxy pattern is implemented with ProfilerImp class, in which a wrapper creates a proxy that allows every
+        method from different class to augment some functions, in this example, the augmented function is to
+        measure method's performance (ProfilingState#record() and clock.instant())
+
+        Personally, the drawbacks for this method is that it is hard to implement before getting used to it. But it makes
+        the program easier to add functionalities.
+
+    2. Builder pattern:
+        Builder pattern can be found in CrawlConfiguration. It offers a more understandable way to create a new Object
+        by using a series of setters instead of feeding a lot of parameter for its constructor.
+
+    3. Dependency Injection:
+        The DI pattern is implemented in WebCrawlerImpl and Profiler by Guice module, which makes the programmer
+        easier to control objects' fields without worrying about mis-operation of the fields in the objects' instance

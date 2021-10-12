@@ -1,6 +1,8 @@
 package com.udacity.webcrawler.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.LinkedHashSet;
@@ -24,6 +26,17 @@ public final class CrawlerConfiguration {
     private final int popularWordCount;
     private final String profileOutputPath;
     private final String resultPath;
+
+    @Override
+    public String toString() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     private CrawlerConfiguration(
             List<String> startPages,
@@ -310,6 +323,7 @@ public final class CrawlerConfiguration {
             this.resultPath = Objects.requireNonNull(resultPath);
             return this;
         }
+
 
         /**
          * Constructs a {@link CrawlerConfiguration} from this builder.
